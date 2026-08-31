@@ -121,11 +121,11 @@
     if(index>=30){const i=nearestGround(Math.floor(route.length*.72),true),bottom=topOf(i);mechanics.push({type:'laser',x:i*120+51,y:155,w:18,h:bottom-155,support:i});}
     const routeMiddle=Math.floor(route.length/2);
     const checkpointIndex=nearestGround(routeMiddle,true);
-    const checkpoint={x:checkpointIndex*120+60,y:topOf(checkpointIndex)};
+    const checkpoint={x:checkpointIndex*120+60,y:topOf(checkpointIndex),active:false,animatingUntil:0};
     const spawnIndex=[0,1,2,3].find(i=>route[i]!=='_'&&(!hz[i]||hz[i]===' '))??nearestGround(1,true);
     const spawn={x:spawnIndex*120+42,y:topOf(spawnIndex)-30};
     const boss=index%10===9 ? {x:-120,y:GROUND-62,w:58,h:58,type:(biome%2?'Spike Head':'Rock Head'),speed:68+biome*10} : null;
-    return {index,biome,route,width:route.length*120,platforms,hazards,fruits:fruitList,boxes:boxList,mechanics,boss,checkpoint,spawn,start:spawn.x,end:route.length*120-88,fruitTotal:fruitList.length,collected:0,started:performance.now(),cleared:false};
+    return {index,biome,route,width:route.length*120,platforms,hazards,fruits:fruitList,boxes:boxList,mechanics,boss,checkpoint,spawn,start:spawn.x,end:route.length*120-88,fruitTotal:fruitList.length,collected:0,started:performance.now(),cleared:false,checkpointCollected:0};
   }
 
   function loadStage(index, fresh=true){
@@ -134,6 +134,29 @@
     state.keys={};state.pressed={};
     state.player={x:state.world.spawn.x,y:state.world.spawn.y,w:25,h:30,vx:0,vy:0,onGround:true,onWall:0,jumps:0,char:Math.min(Math.floor(state.stage/10),3),face:1,state:'Idle',anim:'appear',animUntil:performance.now()+620,phase:false,dead:false,invuln:performance.now()+1000};
     state.transition=fresh?1:0; updateHUD();
+  }
+  function respawnPlayer(){
+    const w=state.world;if(!w)return;
+    const hasCp=w.checkpoint&&w.checkpoint.active;
+    const spawnX=hasCp ? w.checkpoint.x-12 : w.spawn.x;
+    const spawnY=hasCp ? w.checkpoint.y-30 : w.spawn.y;
+    const currentChar=state.player ? state.player.char : Math.min(Math.floor(state.stage/10),3);
+    state.player={x:spawnX,y:spawnY,w:25,h:30,vx:0,vy:0,onGround:true,onWall:0,jumps:0,char:currentChar,face:1,state:'Idle',anim:'appear',animUntil:performance.now()+620,phase:false,dead:false,invuln:performance.now()+1000};
+    state.keys={};state.pressed={};state.hackUntil=0;state.particles=[];
+    if(hasCp){
+      w.fruits.forEach(f=>{ f.collected = !!f.savedAtCheckpoint; });
+      w.collected = w.checkpointCollected || w.fruits.filter(f=>f.collected).length;
+      w.boxes.forEach(b=>{ b.state = b.savedAtCheckpoint || 'idle'; b.timer = 0; });
+      if(w.boss) w.boss.x = w.checkpoint.x - 260;
+      state.camera=clamp(spawnX-W*.38,0,Math.max(0,w.width-W));
+    } else {
+      w.fruits.forEach(f=>{ f.collected = false; });
+      w.collected = 0;
+      w.boxes.forEach(b=>{ b.state = 'idle'; b.timer = 0; });
+      if(w.boss) w.boss.x = -120;
+      state.camera=0;
+    }
+    updateHUD();
   }
   function startRun(isNew=false){
     if(isNew){ const scores=save.scores||[],muted=save.muted,reduced=save.reduced; save=defaultSave();save.scores=scores;save.muted=muted;save.reduced=reduced;state.runBase=0;save.runStarted=true;save.lives=3; }
@@ -157,7 +180,7 @@
 
   function burst(x,y,color,count=8){for(let i=0;i<count;i++)state.particles.push({x,y,vx:(Math.random()-.5)*190,vy:(Math.random()-.8)*170,life:.65,color});}
   function dust(x,y){state.particles.push({x,y,vx:-state.player.vx*.15,vy:-20,life:.35,sprite:'Other/Dust Particle.png'});}
-  function hurt(){const p=state.player;if(!p||p.dead||performance.now()<p.invuln)return;p.dead=true;p.state='Hit';p.anim='disappear';p.animUntil=performance.now()+650;sfx('hit');state.shake=12;save.lives--;updateHUD();commitTime();save.elapsed=state.runBase;persist();setTimeout(()=>{if(save.lives<=0){state.screen='over';$('#gameOverText').textContent=`Stage ${pad(state.stage+1)} menghabiskan nyawa terakhir. Ulangi stage ini dengan 3 nyawa baru.`;showOnly('#gameOver');$('#hud').classList.add('hidden');}else loadStage(state.stage,false);},700); }
+  function hurt(){const p=state.player;if(!p||p.dead||performance.now()<p.invuln)return;p.dead=true;p.state='Hit';p.anim='disappear';p.animUntil=performance.now()+650;sfx('hit');state.shake=12;save.lives--;updateHUD();commitTime();save.elapsed=state.runBase;persist();setTimeout(()=>{if(save.lives<=0){state.screen='over';$('#gameOverText').textContent=`Stage ${pad(state.stage+1)} menghabiskan nyawa terakhir. Ulangi stage ini dengan 3 nyawa baru.`;showOnly('#gameOver');$('#hud').classList.add('hidden');}else respawnPlayer();},700); }
   function collect(f){f.collected=true;state.world.collected++;sfx('fruit');burst(f.x+14,f.y+14,BIOMES[state.world.biome].accent);state.particles.push({x:f.x,y:f.y,vx:0,vy:-70,life:.45,sprite:'Items/Fruits/Collected.png'});unlockAchievement('collector',state.world.collected>=state.world.fruitTotal);updateHUD();if(state.world.collected===state.world.fruitTotal)toast('EXIT UNLOCKED');}
   function unlockAchievement(id,condition=true){if(condition&&!save.achievements.includes(id)){save.achievements.push(id);persist();toast('ACHIEVEMENT UNLOCKED');}}
 
@@ -192,6 +215,19 @@
     w.mechanics.filter(m=>m.type==='laser').forEach(m=>{if(!trapsOff&&rects(p,m))hurt();});
     if(w.boss){const b=w.boss;b.x+=b.speed*dt;if(p.x-b.x>360)b.x+=55*dt;if(rects(p,b))hurt();if(b.x>p.x+100)b.x=p.x-180;}
     w.fruits.forEach(f=>{if(!f.collected&&rects(p,f))collect(f);});
+    if(w.checkpoint&&!w.checkpoint.active&&!p.dead){
+      const cp=w.checkpoint;
+      if(Math.abs((p.x+p.w/2)-cp.x)<36&&p.y+p.h>=cp.y-64&&p.y<=cp.y+10){
+        w.checkpoint.active=true;
+        w.checkpoint.animatingUntil=performance.now()+900;
+        sfx('win');
+        burst(cp.x,cp.y-32,BIOMES[w.biome].accent,12);
+        w.fruits.forEach(f=>{f.savedAtCheckpoint=f.collected;});
+        w.checkpointCollected=w.collected;
+        w.boxes.forEach(b=>{b.savedAtCheckpoint=b.state;});
+        toast('CHECKPOINT AKTIF');
+      }
+    }
     if(p.y>H+120||p.x< (w.boss? w.boss.x-40:-100))hurt();
     const exit={x:w.end,y:GROUND-70,w:50,h:70};if(w.collected===w.fruitTotal&&rects(p,exit)&&!w.cleared)clearStage();
     state.camera=clamp(state.camera+(p.x-W*.38-state.camera)*Math.min(1,dt*5),0,Math.max(0,w.width-W));
@@ -207,8 +243,15 @@
     w.platforms.forEach(s=>{if(s.type==='ground')drawTerrain(s);else{const on=performance.now()>state.hackUntil;const path=s.type==='fall'?'Traps/Falling Platforms/On (32x10).png':`Traps/Platforms/${s.type==='brown'?'Brown':'Grey'} ${on?'On (32x8)':'Off'}.png`;if(s.type!=='fall'){const chain=img('Traps/Platforms/Chain.png');for(let y=0;y<s.y;y+=16)ctx.drawImage(chain,s.x+s.w/2-4,y,8,16);}frame(path,s.x,s.y,s.w,18, s.w,18);}});
     // Start, midpoint checkpoint, and goal use every checkpoint family during a run.
     const startAge=performance.now()-w.started;frame(startAge<900?'Items/Checkpoints/Start/Start (Moving) (64x64).png':'Items/Checkpoints/Start/Start (Idle).png',w.start-26,GROUND-64,64,64,64,64);
-    const cp=w.checkpoint, passed=state.player.x>cp.x;frame(passed?'Items/Checkpoints/Checkpoint/Checkpoint (Flag Idle)(64x64).png':'Items/Checkpoints/Checkpoint/Checkpoint (No Flag).png',cp.x-32,cp.y-64,64,64,64,64);
-    if(Math.abs(state.player.x-cp.x)<55&&!passed)frame('Items/Checkpoints/Checkpoint/Checkpoint (Flag Out) (64x64).png',cp.x-32,cp.y-64,64,64,64,64);
+    const cp=w.checkpoint;
+    if(cp){
+      if(cp.active){
+        const isFlagOut=performance.now()<cp.animatingUntil;
+        frame(isFlagOut?'Items/Checkpoints/Checkpoint/Checkpoint (Flag Out) (64x64).png':'Items/Checkpoints/Checkpoint/Checkpoint (Flag Idle)(64x64).png',cp.x-32,cp.y-64,64,64,64,64);
+      } else {
+        frame('Items/Checkpoints/Checkpoint/Checkpoint (No Flag).png',cp.x-32,cp.y-64,64,64,64,64);
+      }
+    }
     frame(w.collected===w.fruitTotal?'Items/Checkpoints/End/End (Pressed) (64x64).png':'Items/Checkpoints/End/End (Idle).png',w.end-8,GROUND-64,64,64,64,64);
     w.mechanics.forEach(m=>{if(m.type==='barrier'){ctx.fillStyle=state.player.phase?'#ff7ed433':'#ff7ed4aa';ctx.fillRect(m.x,m.y,m.w,m.h);for(let y=m.y;y<m.y+m.h;y+=24)ctx.fillStyle='#ffd1ef',ctx.fillRect(m.x+7,y,8,12);}else if(m.type==='laser'){const off=performance.now()<state.hackUntil;ctx.fillStyle=off?'#68f7da22':'#63eeffcc';ctx.fillRect(m.x,m.y,m.w,m.h);frame(off?'Traps/Fire/Off.png':'Traps/Fire/On (16x32).png',m.x-7,m.y,32,64,32,64);}else{const path=m.type==='i'?'Traps/Sand Mud Ice/Ice Particle.png':m.type==='m'?'Traps/Sand Mud Ice/Mud Particle.png':'Traps/Sand Mud Ice/Sand Particle.png';ctx.fillStyle=m.type==='i'?'#9feaff99':'#6c432d';ctx.fillRect(m.x,m.y,m.w,m.h);for(let x=m.x;x<m.x+m.w;x+=24)ctx.drawImage(img(path),x,m.y-7,16,16);}});
     w.boxes.forEach(b=>{if(b.state==='gone')return;let path=`Items/Boxes/Box${b.type}/Idle.png`;if(b.state==='hit')path=`Items/Boxes/Box${b.type}/Hit (28x24).png`;if(b.state==='break')path=`Items/Boxes/Box${b.type}/Break.png`;frame(path,b.x,b.y,34,30,34,30);});
