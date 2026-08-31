@@ -38,8 +38,8 @@ Karakter baru terbuka setiap menyelesaikan satu biome. Stage terakhir mengharusk
 ## Aturan run
 
 - Semua buah dalam stage harus diambil sebelum portal terbuka.
-- Pemain mendapat tiga nyawa untuk setiap biome.
-- Kehabisan nyawa mengembalikan run ke awal biome tersebut.
+- Pemain memiliki tiga nyawa.
+- Kehabisan nyawa mengisi kembali tiga nyawa dan mengulang stage yang sedang dimainkan.
 - Timer tetap menghitung kematian dan pengulangan stage.
 - Timer berhenti ketika game di-pause atau browser ditutup.
 - Progress, achievement, pengaturan, dan leaderboard disimpan di browser dengan `localStorage`.
