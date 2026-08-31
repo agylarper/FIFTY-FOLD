@@ -82,8 +82,26 @@ body {
 }
 
 @media (pointer: coarse), (hover: none) {
+  #shell.playing {
+    --touch-tray-height: 72px;
+    width: min(100%, calc(177.7778vh - 156.45px));
+    width: min(100%, calc(177.7778dvh - 156.45px));
+    aspect-ratio: auto;
+  }
+
+  #shell.playing #game {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+
   #shell.playing .touch-controls {
     display: block;
+    position: relative;
+    inset: auto;
+    height: var(--touch-tray-height);
+    border-top: 2px solid #515a75;
+    background: linear-gradient(180deg, #171c29, #0d1018);
   }
 
   body {
@@ -98,6 +116,43 @@ body {
   #shell {
     width: min(100%, calc(100dvh * 16 / 9));
     margin: auto;
+  }
+
+  .touch-controls button {
+    width: clamp(46px, 14dvh, 58px);
+    height: clamp(46px, 14dvh, 58px);
+    font-size: clamp(17px, 5dvh, 24px);
+  }
+
+  .touch-move,
+  .touch-actions {
+    bottom: 6px;
+  }
+
+  .touch-move {
+    left: max(8px, env(safe-area-inset-left));
+  }
+
+  .touch-actions {
+    right: max(8px, env(safe-area-inset-right));
+  }
+
+  .touch-actions .touch-jump {
+    width: clamp(52px, 16dvh, 64px);
+    height: clamp(52px, 16dvh, 64px);
+  }
+
+  .touch-switch,
+  .touch-ability {
+    margin-bottom: 0;
+  }
+
+  .touch-pause {
+    top: 50%;
+    right: auto;
+    left: 50%;
+    margin-top: -21px;
+    margin-left: -21px;
   }
 
   #hud {
@@ -119,22 +174,28 @@ body {
 }
 
 @media (pointer: coarse) and (orientation: portrait) {
+  #shell.playing {
+    --touch-tray-height: 68px;
+  }
+
   .touch-controls button {
-    width: clamp(44px, 14vw, 62px);
-    height: clamp(44px, 14vw, 62px);
+    width: clamp(44px, 13vw, 52px);
+    height: clamp(44px, 13vw, 52px);
   }
 
   .touch-actions .touch-jump {
-    width: clamp(52px, 16vw, 72px);
-    height: clamp(52px, 16vw, 72px);
+    width: clamp(50px, 15vw, 58px);
+    height: clamp(50px, 15vw, 58px);
   }
 
   .touch-move,
   .touch-actions {
     bottom: 8px;
+    gap: 6px;
   }
 
   .touch-pause {
-    top: 42px;
+    left: 42%;
   }
+
 }
