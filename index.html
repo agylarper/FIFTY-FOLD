@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Fiftyfold — Puzzle Platformer</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="themes.css">
+</head>
+<body>
+  <main id="app">
+    <section id="shell" aria-label="Fiftyfold game">
+      <canvas id="game" width="960" height="540" aria-label="Area permainan"></canvas>
+      <div id="hud" class="hidden">
+        <div class="hud-group"><span id="worldLabel">BIOME 1</span><strong id="stageLabel">01</strong></div>
+        <div class="hud-group center"><span id="fruitLabel">FRUIT 0/0</span><strong id="timerLabel">00:00.000</strong></div>
+        <div class="hud-group right"><span id="characterLabel">MASK DUDE</span><strong id="livesLabel">♥ ♥ ♥</strong></div>
+      </div>
+      <div id="toast" aria-live="polite"></div>
+      <section id="titleScreen" class="overlay active">
+        <div class="brand-mark"><span>FIFTY</span><span>FOLD</span></div>
+        <p class="eyebrow">A 50-STAGE PUZZLE RUN</p>
+        <p class="tagline">Empat tubuh. Satu jalan keluar. Tiga nyawa.</p>
+        <div class="main-actions">
+          <button data-action="play"><img src="Menu/Buttons/Play.png" alt=""> <span>CONTINUE RUN</span></button>
+          <button data-action="new"><img src="Menu/Buttons/Restart.png" alt=""> <span>NEW GAME</span></button>
+        </div>
+        <div class="icon-actions">
+          <button data-panel="levels" title="Levels"><img src="Menu/Buttons/Levels.png" alt="Levels"></button>
+          <button data-panel="achievements" title="Achievements"><img src="Menu/Buttons/Achievements.png" alt="Achievements"></button>
+          <button data-panel="leaderboard" title="Leaderboard"><img src="Menu/Buttons/Leaderboard.png" alt="Leaderboard"></button>
+          <button data-panel="settings" title="Settings"><img src="Menu/Buttons/Settings.png" alt="Settings"></button>
+          <button data-action="volume" title="Volume"><img src="Menu/Buttons/Volume.png" alt="Volume"></button>
+        </div>
+        <p class="controls">A/D MOVE · SPACE JUMP · E ABILITY · Q SWITCH · ESC PAUSE</p>
+        <div class="font-atlas" aria-label="Original pixel font atlases">
+          <img src="Menu/Text/Text (White) (8x10).png" alt="White pixel font atlas">
+          <img src="Menu/Text/Text (Black) (8x10).png" alt="Black pixel font atlas">
+        </div>
+      </section>
+      <section id="pauseScreen" class="overlay card-overlay">
+        <div class="panel small">
+          <p class="eyebrow">RUN PAUSED</p><h2>TAKE A BREATH</h2>
+          <button data-action="resume"><img src="Menu/Buttons/Play.png" alt=""> RESUME</button>
+          <button data-action="restart-stage"><img src="Menu/Buttons/Restart.png" alt=""> RESTART STAGE</button>
+          <button data-action="home"><img src="Menu/Buttons/Back.png" alt=""> MAIN MENU</button>
+          <button class="close" data-action="resume"><img src="Menu/Buttons/Close.png" alt="Close"></button>
+        </div>
+      </section>
+      <section id="modal" class="overlay card-overlay">
+        <div class="panel">
+          <button class="close" data-action="close-modal"><img src="Menu/Buttons/Close.png" alt="Close"></button>
+          <p class="eyebrow" id="modalEyebrow">ARCHIVE</p>
+          <h2 id="modalTitle">LEVELS</h2>
+          <div id="modalBody"></div>
+          <div class="pager">
+            <button data-action="previous"><img src="Menu/Buttons/Previous.png" alt="Previous"></button>
+            <button data-action="next"><img src="Menu/Buttons/Next.png" alt="Next"></button>
+          </div>
+        </div>
+      </section>
+      <section id="gameOver" class="overlay card-overlay">
+        <div class="panel small"><p class="eyebrow">NO LIVES LEFT</p><h2>BIOME RESET</h2><p id="gameOverText"></p><button data-action="retry-biome"><img src="Menu/Buttons/Restart.png" alt=""> RETRY BIOME</button></div>
+      </section>
+      <section id="victory" class="overlay card-overlay">
+        <div class="panel small"><p class="eyebrow">ALL 50 STAGES CLEARED</p><h2>RUN COMPLETE</h2><p id="victoryTime"></p><label>Runner name<input id="runnerName" maxlength="12" value="PLAYER"></label><button data-action="save-score"><img src="Menu/Buttons/Leaderboard.png" alt=""> SAVE TIME</button></div>
+      </section>
+    </section>
+    <p class="below">Best experienced with a keyboard · Progress saves locally</p>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
