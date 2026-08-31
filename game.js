@@ -128,11 +128,15 @@
     return {index,biome,route,width:route.length*120,platforms,hazards,fruits:fruitList,boxes:boxList,mechanics,boss,checkpoint,spawn,start:spawn.x,end:route.length*120-88,fruitTotal:fruitList.length,collected:0,started:performance.now(),cleared:false,checkpointCollected:0};
   }
 
+  function createPlayer(x, y, char=0){
+    return {x, y, w:25, h:30, vx:0, vy:0, onGround:true, onWall:0, jumps:0, char, face:1, state:'Idle', anim:'appear', animUntil:performance.now()+620, phase:false, dead:false, invuln:performance.now()+1000};
+  }
+
   function loadStage(index, fresh=true){
     state.stage=clamp(index,0,49); save.stage=state.stage; save.unlocked=Math.max(save.unlocked,state.stage); persist();
     state.world=makeWorld(state.stage); state.camera=0; state.hackUntil=0; state.particles=[];
     state.keys={};state.pressed={};
-    state.player={x:state.world.spawn.x,y:state.world.spawn.y,w:25,h:30,vx:0,vy:0,onGround:true,onWall:0,jumps:0,char:Math.min(Math.floor(state.stage/10),3),face:1,state:'Idle',anim:'appear',animUntil:performance.now()+620,phase:false,dead:false,invuln:performance.now()+1000};
+    state.player=createPlayer(state.world.spawn.x, state.world.spawn.y, Math.min(Math.floor(state.stage/10),3));
     state.transition=fresh?1:0; updateHUD();
   }
   function respawnPlayer(){
@@ -141,12 +145,12 @@
     const spawnX=hasCp ? w.checkpoint.x-12 : w.spawn.x;
     const spawnY=hasCp ? w.checkpoint.y-30 : w.spawn.y;
     const currentChar=state.player ? state.player.char : Math.min(Math.floor(state.stage/10),3);
-    state.player={x:spawnX,y:spawnY,w:25,h:30,vx:0,vy:0,onGround:true,onWall:0,jumps:0,char:currentChar,face:1,state:'Idle',anim:'appear',animUntil:performance.now()+620,phase:false,dead:false,invuln:performance.now()+1000};
+    state.player=createPlayer(spawnX, spawnY, currentChar);
     state.keys={};state.pressed={};state.hackUntil=0;state.particles=[];
     if(hasCp){
       w.fruits.forEach(f=>{ f.collected = !!f.savedAtCheckpoint; });
       w.collected = w.checkpointCollected || w.fruits.filter(f=>f.collected).length;
-      w.boxes.forEach(b=>{ b.state = b.savedAtCheckpoint || 'idle'; b.timer = 0; });
+      w.boxes.forEach(b=>{ b.state = b.savedState || 'idle'; b.timer = 0; });
       if(w.boss) w.boss.x = w.checkpoint.x - 260;
       state.camera=clamp(spawnX-W*.38,0,Math.max(0,w.width-W));
     } else {
@@ -224,7 +228,7 @@
         burst(cp.x,cp.y-32,BIOMES[w.biome].accent,12);
         w.fruits.forEach(f=>{f.savedAtCheckpoint=f.collected;});
         w.checkpointCollected=w.collected;
-        w.boxes.forEach(b=>{b.savedAtCheckpoint=b.state;});
+        w.boxes.forEach(b=>{b.savedState=(b.state==='gone'||b.state==='break'||b.state==='hit')?'gone':'idle';});
         toast('CHECKPOINT AKTIF');
       }
     }
