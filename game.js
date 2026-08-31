@@ -95,37 +95,43 @@
   function makeWorld(index){
     const route=ROUTES[index], hz=HAZARDS[index]||'', biome=Math.floor(index/10), platforms=[], hazards=[], fruitList=[], boxList=[], mechanics=[];
     const topOf=(i)=> route[i]==='_' ? 380 : GROUND-Number(route[i]||0)*62;
+    const nearestGround=(target,preferClear=false)=>{
+      for(let distance=0;distance<route.length;distance++){
+        for(const i of [target-distance,target+distance]){
+          if(i>0&&i<route.length-1&&route[i]!=='_'&&(!preferClear||!hz[i]||hz[i]===' '))return i;
+        }
+      }
+      return 1;
+    };
     for(let i=0;i<route.length;i++){
       const x=i*120, ch=route[i];
       if(ch!=='_') platforms.push({x,y:topOf(i),w:122,h:H-topOf(i),type:'ground'});
       const h=hz[i]||' ';
       const y=topOf(i);
       if(h==='d'){platforms.push({x:x+30,y:y-72,w:72,h:12,type:'fall'});}
-      if('swfangoc'.includes(h)) hazards.push({type:h,x:x+48,y:y-(h==='f'?32:h==='o'?74:h==='c'?28:24),w:h==='o'?28:h==='c'?28:26,h:h==='f'?32:h==='o'?74:28,active:true});
-      if(h==='t') hazards.push({type:'t',x:x+43,y:y-28,w:36,h:28,active:true});
-      if(h==='b') boxList.push({x:x+46,y:y-32,w:34,h:30,type:(i+index)%3+1,state:'idle',timer:0});
-      if(h==='m'||h==='i') mechanics.push({type:h,x:x+10,y:y-9,w:100,h:9});
+      if(ch!=='_'&&'swfangoc'.includes(h)) hazards.push({type:h,x:x+48,y:y-(h==='f'?32:h==='o'?74:h==='c'?28:24),w:h==='o'?28:h==='c'?28:26,h:h==='f'?32:h==='o'?74:28,active:true,support:i});
+      if(ch!=='_'&&h==='t') hazards.push({type:'t',x:x+43,y:y-28,w:36,h:28,active:true,support:i});
+      if(ch!=='_'&&h==='b') boxList.push({x:x+46,y:y-32,w:34,h:30,type:(i+index)%3+1,state:'idle',timer:0,support:i});
+      if(ch!=='_'&&(h==='m'||h==='i')) mechanics.push({type:h,x:x+10,y:y-9,w:100,h:9,support:i});
       if(h==='p'||h==='g'){platforms.push({x:x+30,y:y-84,w:76,h:12,type:h==='p'?'brown':'grey'});}
       if(i>0 && i<route.length-1 && ch!=='_' && (i%2===1 || i%5===0)) fruitList.push({x:x+54,y:y-70-(i%3)*20,w:28,h:28,type:(i+index)%fruits.length,collected:false});
     }
-    if(index>=20) mechanics.push({type:'barrier',x:Math.floor(route.length*.54)*120,y:170,w:22,h:292});
-    if(index>=30) mechanics.push({type:'laser',x:Math.floor(route.length*.72)*120,y:155,w:18,h:307});
+    if(index>=20){const i=nearestGround(Math.floor(route.length*.54),true),bottom=topOf(i);mechanics.push({type:'barrier',x:i*120+49,y:170,w:22,h:bottom-170,support:i});}
+    if(index>=30){const i=nearestGround(Math.floor(route.length*.72),true),bottom=topOf(i);mechanics.push({type:'laser',x:i*120+51,y:155,w:18,h:bottom-155,support:i});}
     const routeMiddle=Math.floor(route.length/2);
-    let checkpointIndex=routeMiddle;
-    for(let distance=0;distance<route.length;distance++){
-      const candidates=[routeMiddle-distance,routeMiddle+distance];
-      const safe=candidates.find(i=>i>0&&i<route.length-1&&route[i]!=='_'&&(!hz[i]||hz[i]===' '));
-      if(safe!==undefined){checkpointIndex=safe;break;}
-    }
+    const checkpointIndex=nearestGround(routeMiddle,true);
     const checkpoint={x:checkpointIndex*120+60,y:topOf(checkpointIndex)};
+    const spawnIndex=[0,1,2,3].find(i=>route[i]!=='_'&&(!hz[i]||hz[i]===' '))??nearestGround(1,true);
+    const spawn={x:spawnIndex*120+42,y:topOf(spawnIndex)-30};
     const boss=index%10===9 ? {x:-120,y:GROUND-62,w:58,h:58,type:(biome%2?'Spike Head':'Rock Head'),speed:68+biome*10} : null;
-    return {index,biome,route,width:route.length*120,platforms,hazards,fruits:fruitList,boxes:boxList,mechanics,boss,checkpoint,start:52,end:route.length*120-88,fruitTotal:fruitList.length,collected:0,started:performance.now(),cleared:false};
+    return {index,biome,route,width:route.length*120,platforms,hazards,fruits:fruitList,boxes:boxList,mechanics,boss,checkpoint,spawn,start:spawn.x,end:route.length*120-88,fruitTotal:fruitList.length,collected:0,started:performance.now(),cleared:false};
   }
 
   function loadStage(index, fresh=true){
     state.stage=clamp(index,0,49); save.stage=state.stage; save.unlocked=Math.max(save.unlocked,state.stage); persist();
     state.world=makeWorld(state.stage); state.camera=0; state.hackUntil=0; state.particles=[];
-    state.player={x:52,y:330,w:25,h:30,vx:0,vy:0,onGround:false,onWall:0,jumps:0,char:Math.min(Math.floor(state.stage/10),3),face:1,state:'Idle',anim:'appear',animUntil:performance.now()+620,phase:false,dead:false};
+    state.keys={};state.pressed={};
+    state.player={x:state.world.spawn.x,y:state.world.spawn.y,w:25,h:30,vx:0,vy:0,onGround:true,onWall:0,jumps:0,char:Math.min(Math.floor(state.stage/10),3),face:1,state:'Idle',anim:'appear',animUntil:performance.now()+620,phase:false,dead:false,invuln:performance.now()+1000};
     state.transition=fresh?1:0; updateHUD();
   }
   function startRun(isNew=false){
