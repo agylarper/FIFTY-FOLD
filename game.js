@@ -87,7 +87,8 @@
   function runTime(){ return state.runBase + (save.runStarted && state.screen==='game' && !state.paused ? performance.now()-state.runStamp : 0); }
   function commitTime(){ if(save.runStarted && state.screen==='game' && !state.paused){ state.runBase=runTime(); save.elapsed=state.runBase; state.runStamp=performance.now(); } }
   function toast(msg){ const el=$('#toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove('show'),1800); }
-  function showOnly(id){ $$('.overlay').forEach(x=>x.classList.remove('active')); if(id) $(id).classList.add('active'); }
+  function showOnly(id){ $$('.overlay').forEach(x=>x.classList.remove('active')); if(id) $(id).classList.add('active'); $('#shell').classList.toggle('playing',!id&&state.screen==='game'&&!state.paused); }
+  function pauseGame(){if(state.screen!=='game'||state.paused)return;commitTime();state.keys={};state.paused=true;state.screen='pause';showOnly('#pauseScreen');}
 
   function audio(){ if(!state.audio) state.audio=new (window.AudioContext||window.webkitAudioContext)(); return state.audio; }
   function sfx(kind){ if(save.muted) return; const a=audio(),o=a.createOscillator(),g=a.createGain(); const spec={jump:[420,690,.08,'square'],fruit:[720,1100,.11,'sine'],hit:[160,60,.18,'sawtooth'],switch:[290,520,.12,'square'],win:[520,1040,.35,'triangle'],hack:[110,880,.22,'square']}[kind]||[300,400,.1,'square']; o.type=spec[3];o.frequency.setValueAtTime(spec[0],a.currentTime);o.frequency.exponentialRampToValueAtTime(spec[1],a.currentTime+spec[2]);g.gain.setValueAtTime(.08,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+spec[2]);o.connect(g).connect(a.destination);o.start();o.stop(a.currentTime+spec[2]); }
@@ -240,9 +241,31 @@
     if(b.dataset.biome!==undefined){state.modalPage=Number(b.dataset.biome);renderModal();}if(b.dataset.level!==undefined){const n=Number(b.dataset.level);if(n<=save.unlocked){commitTime();state.screen='game';state.runStamp=performance.now();showOnly(null);$('#hud').classList.remove('hidden');loadStage(n);}}
     if(b.dataset.setting==='mute'){save.muted=!save.muted;persist();renderModal();}if(b.dataset.setting==='motion'){save.reduced=!save.reduced;persist();renderModal();}if(b.dataset.setting==='clear'){if(confirm('Clear stage progress and achievements? Local leaderboard will remain.')){const scores=save.scores,muted=save.muted,reduced=save.reduced;save=defaultSave();save.scores=scores;save.muted=muted;save.reduced=reduced;state.runBase=0;persist();renderModal();}}
   });
-  addEventListener('keydown',e=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(!state.keys[e.code]){if(state.screen==='game'&&!state.paused){if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW')jump();if(e.code==='KeyE')ability();if(e.code==='KeyQ')switchChar();if(e.code==='Escape'){commitTime();state.paused=true;state.screen='pause';showOnly('#pauseScreen');}}else if(e.code==='Escape'&&state.screen==='pause'){$('[data-action="resume"]').click();}}state.keys[e.code]=true;});
+  addEventListener('keydown',e=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(!state.keys[e.code]){if(state.screen==='game'&&!state.paused){if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW')jump();if(e.code==='KeyE')ability();if(e.code==='KeyQ')switchChar();if(e.code==='Escape')pauseGame();}else if(e.code==='Escape'&&state.screen==='pause'){$('[data-action="resume"]').click();}}state.keys[e.code]=true;});
   addEventListener('keyup',e=>state.keys[e.code]=false);
-  addEventListener('blur',()=>{if(state.screen==='game'&&!state.paused){commitTime();state.paused=true;state.screen='pause';showOnly('#pauseScreen');}});
+  addEventListener('blur',pauseGame);
+  $$('[data-touch]').forEach(button=>{
+    const control=button.dataset.touch;
+    const release=e=>{
+      if(button._pointer!==undefined&&e.pointerId!==button._pointer)return;
+      if(control==='left')state.keys.KeyA=false;
+      if(control==='right')state.keys.KeyD=false;
+      button.classList.remove('pressed');button._pointer=undefined;
+    };
+    button.addEventListener('pointerdown',e=>{
+      e.preventDefault();e.stopPropagation();button._pointer=e.pointerId;button.setPointerCapture?.(e.pointerId);button.classList.add('pressed');
+      if(control==='left')state.keys.KeyA=true;
+      if(control==='right')state.keys.KeyD=true;
+      if(control==='jump')jump();
+      if(control==='ability')ability();
+      if(control==='switch')switchChar();
+      if(control==='pause')pauseGame();
+    });
+    button.addEventListener('pointerup',release);
+    button.addEventListener('pointercancel',release);
+    button.addEventListener('lostpointercapture',release);
+  });
+  canvas.addEventListener('contextmenu',e=>e.preventDefault());
   addEventListener('beforeunload',()=>{commitTime();save.elapsed=state.runBase;persist();});
   setInterval(()=>{if(state.screen==='game'&&!state.paused){commitTime();persist();}},5000);
   loadStage(save.stage||0);state.screen='title';showOnly('#titleScreen');$('#hud').classList.add('hidden');
