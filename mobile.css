@@ -1,0 +1,140 @@
+html,
+body {
+  overscroll-behavior: none;
+}
+
+#shell,
+#game,
+.touch-controls,
+.touch-controls button {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.touch-controls {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+}
+
+.touch-controls button {
+  pointer-events: auto;
+  display: grid;
+  place-items: center;
+  width: clamp(48px, 8vw, 72px);
+  height: clamp(48px, 8vw, 72px);
+  padding: 0;
+  border: 2px solid #ffffff8c;
+  border-radius: 50%;
+  background: #111827a8;
+  color: #fff;
+  box-shadow: inset 0 0 0 3px #11182780, 0 4px 12px #0008;
+  font-size: clamp(18px, 3vw, 28px);
+  font-weight: 900;
+  backdrop-filter: blur(3px);
+}
+
+.touch-controls button.pressed {
+  background: #76e6d1d9;
+  color: #10201d;
+  transform: scale(.92);
+}
+
+.touch-move,
+.touch-actions {
+  position: absolute;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: flex-end;
+  gap: clamp(8px, 1.8vw, 16px);
+}
+
+.touch-move {
+  left: max(18px, env(safe-area-inset-left));
+}
+
+.touch-actions {
+  right: max(18px, env(safe-area-inset-right));
+}
+
+.touch-actions .touch-jump {
+  width: clamp(58px, 10vw, 84px);
+  height: clamp(58px, 10vw, 84px);
+  background: #ff6e9fc2;
+}
+
+.touch-switch,
+.touch-ability {
+  margin-bottom: clamp(8px, 2vw, 20px);
+}
+
+.touch-pause {
+  position: absolute;
+  top: max(58px, env(safe-area-inset-top));
+  right: max(14px, env(safe-area-inset-right));
+  width: 42px !important;
+  height: 42px !important;
+  font-size: 17px !important;
+}
+
+@media (pointer: coarse), (hover: none) {
+  #shell.playing .touch-controls {
+    display: block;
+  }
+
+  body {
+    min-height: 100dvh;
+  }
+
+  #app {
+    width: 100vw;
+    padding: max(4px, env(safe-area-inset-top)) max(4px, env(safe-area-inset-right)) max(4px, env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left));
+  }
+
+  #shell {
+    width: min(100%, calc(100dvh * 16 / 9));
+    margin: auto;
+  }
+
+  #hud {
+    padding: 8px 10px;
+  }
+
+  #hud .hud-group {
+    font-size: clamp(7px, 1.6vw, 11px);
+    letter-spacing: 1px;
+  }
+
+  #hud .hud-group strong {
+    font-size: clamp(12px, 2.7vw, 20px);
+  }
+
+  .below {
+    display: none;
+  }
+}
+
+@media (pointer: coarse) and (orientation: portrait) {
+  .touch-controls button {
+    width: clamp(44px, 14vw, 62px);
+    height: clamp(44px, 14vw, 62px);
+  }
+
+  .touch-actions .touch-jump {
+    width: clamp(52px, 16vw, 72px);
+    height: clamp(52px, 16vw, 72px);
+  }
+
+  .touch-move,
+  .touch-actions {
+    bottom: 8px;
+  }
+
+  .touch-pause {
+    top: 42px;
+  }
+}

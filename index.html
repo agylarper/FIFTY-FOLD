@@ -2,10 +2,11 @@
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Fiftyfold — Puzzle Platformer</title>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="themes.css">
+  <link rel="stylesheet" href="mobile.css">
 </head>
 <body>
   <main id="app">
@@ -65,6 +66,18 @@
       <section id="victory" class="overlay card-overlay">
         <div class="panel small"><p class="eyebrow">ALL 50 STAGES CLEARED</p><h2>RUN COMPLETE</h2><p id="victoryTime"></p><label>Runner name<input id="runnerName" maxlength="12" value="PLAYER"></label><button data-action="save-score"><img src="Menu/Buttons/Leaderboard.png" alt=""> SAVE TIME</button></div>
       </section>
+      <nav id="touchControls" class="touch-controls" aria-label="Kontrol sentuh">
+        <div class="touch-move">
+          <button data-touch="left" aria-label="Bergerak ke kiri">◀</button>
+          <button data-touch="right" aria-label="Bergerak ke kanan">▶</button>
+        </div>
+        <button class="touch-pause" data-touch="pause" aria-label="Pause">Ⅱ</button>
+        <div class="touch-actions">
+          <button class="touch-switch" data-touch="switch" aria-label="Ganti karakter">Q</button>
+          <button class="touch-ability" data-touch="ability" aria-label="Gunakan kemampuan">E</button>
+          <button class="touch-jump" data-touch="jump" aria-label="Lompat">↑</button>
+        </div>
+      </nav>
     </section>
     <p class="below">Best experienced with a keyboard · Progress saves locally</p>
   </main>

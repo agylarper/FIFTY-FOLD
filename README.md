@@ -24,6 +24,8 @@ Setelah itu buka `http://localhost:8000`.
 | `Q` | Ganti karakter |
 | `Esc` | Pause |
 
+Di perangkat layar sentuh, kontrol muncul otomatis saat permainan dimulai: arah di sisi kiri serta lompat, kemampuan, pergantian karakter, dan pause di sisi kanan. Mode landscape memberi ruang bermain paling nyaman.
+
 ## Karakter
 
 - **Mask Dude** — double jump.
@@ -50,6 +52,7 @@ Tidak ada server atau akun. Leaderboard hanya berlaku pada browser yang sedang d
 index.html   Struktur layar, menu, HUD, dan modal
 style.css    Tampilan utama dan layout responsif
 themes.css   Tekstur tambahan untuk panel
+mobile.css   Layout dan kontrol layar sentuh
 game.js      Level, physics, collision, rendering, audio, dan save data
 Background/  Latar pixel art
 Items/       Buah, box, dan checkpoint
